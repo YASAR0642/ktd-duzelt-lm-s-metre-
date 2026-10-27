@@ -220,13 +220,6 @@ public final class AnalysisActivity extends Activity {
         CheckBox smooth=new CheckBox(this);smooth.setText("3D ve 4D yumuşatma");smooth.setTextColor(Color.WHITE);smooth.setChecked(Prefs.smoothing(this));
         CheckBox grid=new CheckBox(this);grid.setText("3D ızgara / 4D çerçeve");grid.setTextColor(Color.WHITE);grid.setChecked(Prefs.grid(this));
         panel.addView(smooth);panel.addView(grid);
-        Button calibrate=Ui.button(this,"GRADYOMETRE METRE KALİBRASYONU",false);
-        calibrate.setOnClickListener(v->GradiometerCalibrationDialog.show(this,()->{
-            if(data!=null)data.depthCalibrationFactor=1f;
-            depthSliceMeters=0f;
-            if(showing4D)show4D();else showSurface();
-        }));
-        panel.addView(calibrate,new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,Ui.dp(this,49)));
         TextView gainTitle=Ui.text(this,String.format(Locale.US,"Kazanç: %.1fx",anomalyGain),13,Color.WHITE);
         SeekBar gain=new SeekBar(this);gain.setMax(28);gain.setProgress(Math.round((anomalyGain-.2f)*10f));
         gain.setOnSeekBarChangeListener(simple(v->gainTitle.setText(String.format(Locale.US,"Kazanç: %.1fx",.2f+v*.1f))));

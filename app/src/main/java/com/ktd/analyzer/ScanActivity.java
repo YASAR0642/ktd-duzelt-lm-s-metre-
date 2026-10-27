@@ -113,11 +113,6 @@ public final class ScanActivity extends Activity implements BluetoothClient.List
         connectionBtn=Ui.button(this,"BLUETOOTH",false);connectionBtn.setOnClickListener(v->{if(BluetoothClient.isConnected())Toast.makeText(this,"Bağlı: "+BluetoothClient.connectedName(),Toast.LENGTH_SHORT).show();else bt.pickPaired(this);});
         valueBtn=Ui.button(this,"DEĞER",false);valueBtn.setOnClickListener(v->{showValue=!showValue;if(showValue)showDepth=false;applyOverlayMode();});
         depthBtn=Ui.button(this,"DERİNLİK",false);
-        // Ustunde uzun bas: bilinen saha noktasi ile ters sinyal ekrani kalibrasyonu.
-        depthBtn.setOnLongClickListener(v->{GradiometerCalibrationDialog.show(this,()->{
-            data.depthCalibrationFactor=1f;
-            applyOverlayMode();
-        });return true;});
         depthBtn.setOnClickListener(v->{
             showDepth=!showDepth;
             if(showDepth){showValue=false;}
