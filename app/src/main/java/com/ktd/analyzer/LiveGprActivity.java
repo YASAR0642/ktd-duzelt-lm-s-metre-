@@ -52,7 +52,7 @@ public final class LiveGprActivity extends Activity implements BluetoothClient.L
     private GprRadargramView radar;
     private GprTracePanelsView panels;
     private TextView connection, gainLabel, footer;
-    private Button startButton,filterButton,timeButton,antenButton,colorButton,soundButton,hyperbolaButton,autoButton,voiceButton;
+    private Button startButton,filterButton,timeButton,antennaButton,colorButton,soundButton,hyperbolaButton,autoButton,voiceButton;
     private float gain=1f;
     private int antennaMhz=300,filter=0,timeIndex=0,soundTone=0;
     private long count=0,lastAudio=0;

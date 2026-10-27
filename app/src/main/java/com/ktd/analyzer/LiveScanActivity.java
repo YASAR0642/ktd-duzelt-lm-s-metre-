@@ -260,7 +260,7 @@ public final class LiveScanActivity extends Activity implements BluetoothClient.
 
             if(newest!=null){
                 String k=ref.classify(newest.signal()); cls.setText(k);
-                ReferenceInverseDepth.Reading m=ReferenceInverseDepth.measure(newest.signal(),ref.reference(),Prefs.gradiometerDepthFactor(this));
+                ReferenceInverseDepth.Reading m=ReferenceInverseDepth.measure(newest.signal(),ref.reference(),Prefs.gradiometerDepthFactor(LiveScanActivity.this));
                 if(depthInfo!=null){
                     String measured=m.anomaly&&Float.isFinite(m.meters)
                       ? String.format(java.util.Locale.US,"≈ %.2f m • deneysel • REF %.0f • Z %.0f",m.meters,ref.reference(),newest.signal())
