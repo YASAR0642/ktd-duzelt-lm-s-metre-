@@ -17,15 +17,8 @@ public final class Prefs {
     public static boolean serpentine(Context c){ return p(c).getBoolean("serpentine", true); }
     public static boolean voiceGuide(Context c){ return p(c).getBoolean("voice_guide", true); }
     public static float heightGain(Context c){ return p(c).getFloat("gain", 1.0f); }
-    /** Sadece ters sinyalin deneysel metre GORSELLESTIRMESINI carpanla kalibre eder. */
-    public static float gradiometerDepthFactor(Context c){
-        float f=p(c).getFloat("gradiometer_depth_factor",1f);
-        return Float.isFinite(f)&&f>=.001f&&f<=100f?f:1f;
-    }
-    public static void setGradiometerDepthFactor(Context c,float f){
-        if(!Float.isFinite(f)||f<.001f||f>100f)throw new IllegalArgumentException("Gecersiz katsayi");
-        p(c).edit().putFloat("gradiometer_depth_factor",f).apply();
-    }
+    /** Eski kalibrasyon katsayısı artık kullanılmaz; önceki tercihler etkisizdir. */
+    public static float gradiometerDepthFactor(Context c){return 1f;}
 
     public static boolean smoothing(Context c){ return p(c).getBoolean("smoothing", true); }
     public static boolean grid(Context c){ return p(c).getBoolean("grid", true); }

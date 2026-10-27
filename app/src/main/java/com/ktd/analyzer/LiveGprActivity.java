@@ -69,6 +69,7 @@ public final class LiveGprActivity extends Activity implements BluetoothClient.L
         bluetooth=new BluetoothClient(this);
         try{tone=new ToneGenerator(AudioManager.STREAM_MUSIC,30);}catch(Exception ignored){}
         build();
+        if(getIntent()!=null && getIntent().getData()!=null)loadUri(getIntent().getData());
     }
     @Override protected void onStart(){
         super.onStart();BluetoothClient.startGprLines(this);bluetooth.activate();refresh();
@@ -275,6 +276,30 @@ public final class LiveGprActivity extends Activity implements BluetoothClient.L
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         startActivityForResult(intent,OPEN_FILE);
     }
+    private void loadUri(final Uri uri){
+        new Thread(()->{
+            try{
+                String filename="";
+                try(android.database.Cursor c=getContentResolver().query(uri,new String[]{android.provider.OpenableColumns.DISPLAY_NAME},null,null,null)){
+                    if(c!=null&&c.moveToFirst())filename=c.getString(0);
+                }catch(Exception ignored){}
+                boolean csv=filename!=null&&filename.toLowerCase(Locale.ROOT).endsWith(".csv");
+                GprFileIo.Record rec;
+                try(InputStream input=getContentResolver().openInputStream(uri)){
+                    if(input==null)throw new java.io.IOException("Dosya okunamadı");
+                    rec=csv?GprFileIo.readCsv(input):GprFileIo.readSegy(input);
+                }
+                runOnUiThread(()->{
+                    if(running)bluetooth.send("GPR_STOP\n");
+                    running=false;wanted=false;startButton.setText("▶\nBAŞLAT");
+                    radar.resetSession();lastDeviceNs=rec.dtNs;
+                    radar.setImportedMeta(Double.isFinite(timeOverrideNs)?timeOverrideNs:rec.dtNs,rec.dxMeters,false);
+                    for(GprProtocol.Trace t:rec.traces)radar.add(t);
+                    count=rec.traces.size();panels.invalidate();updateFooter();
+                });
+            }catch(Exception ex){runOnUiThread(()->Toast.makeText(this,"GPR dosyası açılamadı: "+ex.getMessage(),Toast.LENGTH_LONG).show());}
+        },"ktd-gpr-import").start();
+    }
     private void save(){
         if(radar.traceCount()==0){Toast.makeText(this,"İz bulunamadı",Toast.LENGTH_SHORT).show();return;}
         Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);
@@ -288,25 +313,7 @@ public final class LiveGprActivity extends Activity implements BluetoothClient.L
         if(result!=RESULT_OK||data==null||data.getData()==null)return;
         final Uri uri=data.getData();
         if(request==OPEN_FILE){
-            new Thread(()->{
-                try{
-                    String name=uri.getLastPathSegment();
-                    boolean csv=name!=null&&name.toLowerCase(Locale.ROOT).endsWith(".csv");
-                    GprFileIo.Record rec;
-                    try(InputStream input=getContentResolver().openInputStream(uri)){
-                        if(input==null)throw new java.io.IOException("Dosya okunamadı");
-                        rec=csv?GprFileIo.readCsv(input):GprFileIo.readSegy(input);
-                    }
-                    runOnUiThread(()->{
-                        if(running)bluetooth.send("GPR_STOP\n");
-                        running=false;wanted=false;startButton.setText("▶\nBAŞLAT");
-                        radar.resetSession();lastDeviceNs=rec.dtNs;
-                        radar.setImportedMeta(Double.isFinite(timeOverrideNs)?timeOverrideNs:rec.dtNs,rec.dxMeters,false);
-                        for(GprProtocol.Trace t:rec.traces)radar.add(t);
-                        count=rec.traces.size();panels.invalidate();updateFooter();
-                    });
-                }catch(Exception ex){runOnUiThread(()->Toast.makeText(this,"GPR dosyası açılamadı: "+ex.getMessage(),Toast.LENGTH_LONG).show());}
-            },"ktd-gpr-import").start();
+            loadUri(uri);
         } else if(request==SAVE_FILE){
             final List<GprProtocol.Trace> current=radar.snapshot();
             final double time=radar.getSampleIntervalNs(),dx=radar.getStepMeters();

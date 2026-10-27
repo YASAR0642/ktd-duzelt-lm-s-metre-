@@ -11,7 +11,7 @@ import java.util.Collections;
  * Referans R her taramanın ilk REF/ÖRNEK AL ölçümünden gelir.
  *   Z > R : s=(Z-R)/(1023-R)
  *   Z < R : s=(R-Z)/R
- *   D=0.50/s [deneysel metre ölçeği]
+ *   D=0.05/s [deneysel gösterim; fiziksel derinlik doğruluğu kanıtlanmamıştır]
  *
  * Doğal zemindeki gürültü bandı (|Z-R|<=10) 0 m yüzey kabul edilir;
  * bu, o noktada yeraltı hedefi 0 m'dedir demek değildir.
@@ -20,7 +20,7 @@ public final class ReferenceInverseDepth {
     private ReferenceInverseDepth(){}
     public static final float ADC_MAX=1023f;
     public static final float GROUND_BAND=10f;
-    public static final float SATURATION_ASSUMED_METERS=.50f;
+    public static final float SATURATION_ASSUMED_METERS=.05f;
     public static final class Reading {
         public final float meters,relativeStrength;
         public final boolean anomaly,positive,saturated,approxReference;
@@ -59,7 +59,7 @@ public final class ReferenceInverseDepth {
         float strength=Math.max(0f,Math.min(1f,Math.abs(diff)/side));
         if(strength<=0f)return new Reading(0f,0f,false,positive,saturated,false);
         // Üst sınır YOK; sinyal küçüldükçe deneysel ölçek büyür.
-        float f=Float.isFinite(calibrationFactor)&&calibrationFactor>0f?calibrationFactor:1f;
+        float f=1f; // Önceki cihaz-kalibrasyon çarpanı devre dışı.
         float meters=(SATURATION_ASSUMED_METERS/strength)*f;
         return new Reading(Float.isFinite(meters)?meters:Float.NaN,strength,true,positive,saturated,false);
     }

@@ -23,6 +23,8 @@ public final class UltrasoundView extends View {
     private int head = 0, count = 0, palette = 0;
     private float maxAbs = 18f;
     private float displayGain=1f;
+    private boolean gprStyle=false;
+    public void setGprStyle(boolean value){gprStyle=value;invalidate();}
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     public UltrasoundView(Context c) {
@@ -57,39 +59,39 @@ public final class UltrasoundView extends View {
     @Override protected void onDraw(Canvas c){
         super.onDraw(c);
         int w=getWidth(),h=getHeight(); if(w<=0||h<=0)return;
-
-        // Dikey ölçek sabit tutulur; kullanıcı yalnız yatay genişleme istedi.
-        float rowH=Math.max(10f,h/46f);
-        int rows=Math.min(count,(int)(h/rowH)+2);
-        int bands=192;
-        float bandW=w/(float)bands;
-
-        for(int j=0;j<rows;j++){
-            int idx=(head-1-j+N)%N; if(!used[idx])continue;
-            float y2=h-j*rowH, y1=y2-rowH-1f;
-            float amp=d[idx];
-            float strength=Math.min(1f,Math.abs(amp)*displayGain/Math.max(1f,maxAbs));
-
-            // Zemin koyu kalır; 3D gibi canlı renk yalnız gerçek anomali alanında görünür.
-            p.setColor(Color.rgb(5,14,18)); p.setAlpha(255); c.drawRect(0,y1,w,y2,p);
-
-            // Hedef güçlü oldukça yalnız SAĞ/SOL yönde genişler. Güçlü anomali yaklaşık
-            // ekran genişliğinin %50-58'ine kadar çıkabilir; merkez ekranda sabittir.
-            float spread=.15f+.12f*strength;
-            final float center=.5f;
-            for(int xb=0;xb<bands;xb++){
-                float xn=(xb+.5f)/bands;
-                float q=(xn-center)/Math.max(.045f,spread);
-                float envelope=(float)Math.exp(-q*q*3.15f);
-                if(envelope<.012f)continue;
-
+        final int rows=Math.min(count,150), bands=160;
+        if(rows==0)return;
+        // Her piksel komşu örneklerin düzgün ağırlıklı ortalamasıyla hesaplanır;
+        // dikdörtgen bloklardan kaynaklanan keskin basamakları kaldırır.
+        android.graphics.Bitmap bm=android.graphics.Bitmap.createBitmap(bands,rows,android.graphics.Bitmap.Config.ARGB_8888);
+        for(int y=0;y<rows;y++){
+            float pos=y*Math.max(0,count-1f)/Math.max(1,rows-1);
+            int j=(int)pos;float frac=pos-j;
+            float a=d[(head-1-j+N)%N];
+            float b=d[(head-1-Math.min(count-1,j+1)+N)%N];
+            float amp=a+(b-a)*frac;
+            for(int x=0;x<bands;x++){
+                float nx=(x+.5f)/bands;
+                float magnitude=Math.min(1f,Math.abs(amp)*displayGain/Math.max(1f,maxAbs));
+                float breadth=.14f+.16f*magnitude;
+                float q=(nx-.5f)/Math.max(.05f,breadth);
+                float envelope=(float)Math.exp(-2.6f*q*q);
                 float local=amp*envelope*displayGain;
-                int col=ColorMaps.color(palette,local,maxAbs);
-                p.setColor(Color.rgb(Color.red(col),Color.green(col),Color.blue(col)));
-                p.setAlpha(255);
-                c.drawRect(xb*bandW,y1,(xb+1)*bandW+1f,y2,p);
+                int col;
+                if(gprStyle){
+                    // Radargram benzeri dikey iz: aynı manyetik örnek; radar/SGY ölçümü değildir.
+                    float intensity=Math.min(1f,Math.abs(local)/Math.max(1f,maxAbs));
+                    int base=ColorMaps.color(palette,local,maxAbs);
+                    col=intensity<.025f?Color.rgb(5,14,18):base;
+                }else{
+                    col=ColorMaps.color(palette,local,maxAbs);
+                    if(envelope<.02f)col=Color.rgb(5,14,18);
+                }
+                bm.setPixel(x,y,col);
             }
         }
-        // FINAL: canlı ultrason ekranında grid çizgileri yok.
+        p.setFilterBitmap(true);
+        c.drawBitmap(bm,null,new android.graphics.Rect(0,0,w,h),p);
+        bm.recycle();
     }
 }

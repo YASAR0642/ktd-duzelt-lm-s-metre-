@@ -85,7 +85,7 @@ public final class AnalysisActivity extends Activity {
         volumeSpread=Prefs.volumeSpread(this);
         volumeLayers=Prefs.volumeLayers(this);
         volumeLevel=Prefs.volumeThreshold(this);
-        data.depthCalibrationFactor=Prefs.gradiometerDepthFactor(this);
+        data.depthCalibrationFactor=1f;
         NeutralExperimentalDepth.apply(data);
         build();showSurface();
     }
@@ -222,7 +222,7 @@ public final class AnalysisActivity extends Activity {
         panel.addView(smooth);panel.addView(grid);
         Button calibrate=Ui.button(this,"GRADYOMETRE METRE KALİBRASYONU",false);
         calibrate.setOnClickListener(v->GradiometerCalibrationDialog.show(this,()->{
-            if(data!=null)data.depthCalibrationFactor=Prefs.gradiometerDepthFactor(this);
+            if(data!=null)data.depthCalibrationFactor=1f;
             depthSliceMeters=0f;
             if(showing4D)show4D();else showSurface();
         }));

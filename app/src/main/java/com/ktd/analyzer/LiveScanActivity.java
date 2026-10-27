@@ -39,6 +39,8 @@ public final class LiveScanActivity extends Activity implements BluetoothClient.
     private TextView connectionBox, cls;
     private UltrasoundView ultrasound;
     private Button liveToggle;
+    private boolean gprStyle=false;
+    private Button normalMode,gprMode;
     private TextView depthInfo,gainLabel;
     private float liveGain=1f;
 
@@ -121,10 +123,18 @@ public final class LiveScanActivity extends Activity implements BluetoothClient.
         clp.setMargins(0,Ui.dp(this,3),0,Ui.dp(this,3));
         root.addView(cls,clp);
 
-        depthInfo=Ui.text(this,"REF bekleniyor • deneysel mesafe",13,Color.rgb(225,192,109));
+        depthInfo=Ui.text(this,"— m",13,Color.rgb(225,192,109));
         depthInfo.setGravity(Gravity.CENTER);Ui.fitText(depthInfo,11,14,1);
         root.addView(depthInfo,new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,Ui.dp(this,38)));
 
+        LinearLayout modes=new LinearLayout(this);
+        normalMode=Ui.button(this,"NORMAL",true);
+        gprMode=Ui.button(this,"GPR GÖRÜNÜM",false);
+        normalMode.setOnClickListener(v->switchMode(false));
+        gprMode.setOnClickListener(v->switchMode(true));
+        modes.addView(normalMode,new LinearLayout.LayoutParams(0,Ui.dp(this,42),1));
+        modes.addView(gprMode,new LinearLayout.LayoutParams(0,Ui.dp(this,42),1));
+        root.addView(modes);
         ultrasound = new UltrasoundView(this); ultrasound.setPalette(Prefs.palette(this));ultrasound.setGain(liveGain);
         root.addView(ultrasound,new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,0,1));
 
@@ -157,6 +167,12 @@ public final class LiveScanActivity extends Activity implements BluetoothClient.
         root.addView(bar,new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,Ui.dp(this,56)));
 
         setContentView(root); Ui.applySafeInsets(this,root); refreshConnection(); updateLiveButton();
+    }
+
+    private void switchMode(boolean gpr){
+        gprStyle=gpr; ultrasound.setGprStyle(gpr);
+        normalMode.setText(gpr?"NORMAL":"● NORMAL");
+        gprMode.setText(gpr?"● GPR GÖRÜNÜM":"GPR GÖRÜNÜM");
     }
 
     private void refreshConnection(){
@@ -207,7 +223,7 @@ public final class LiveScanActivity extends Activity implements BluetoothClient.
     /** SIFIRLA'dan sonra ilk YENİ paket ortam referansı olur; eski paketi kullanmaz. */
     private void manualZero() {
         autoZeroDone=false; ref.clear();
-        if(depthInfo!=null)depthInfo.setText("Yeni çekim • REF bekleniyor");
+        if(depthInfo!=null)depthInfo.setText("— m");
         Toast.makeText(this,"Sıradaki yeni sinyal ortam referansı alınacak",Toast.LENGTH_SHORT).show();
     }
 
@@ -249,7 +265,7 @@ public final class LiveScanActivity extends Activity implements BluetoothClient.
                 last=nf; newest=nf;
                 if(!autoZeroDone){
                     ref.zero(z); autoZeroDone=true;
-                    if(depthInfo!=null)depthInfo.setText(String.format(java.util.Locale.US,"Yeni referans: %.0f • 0 yüzey",z));
+                    if(depthInfo!=null)depthInfo.setText("— m");
                     continue;
                 }
                 visualFrames.add(nf);
@@ -263,8 +279,8 @@ public final class LiveScanActivity extends Activity implements BluetoothClient.
                 ReferenceInverseDepth.Reading m=ReferenceInverseDepth.measure(newest.signal(),ref.reference(),Prefs.gradiometerDepthFactor(LiveScanActivity.this));
                 if(depthInfo!=null){
                     String measured=m.anomaly&&Float.isFinite(m.meters)
-                      ? String.format(java.util.Locale.US,"≈ %.2f m • deneysel • REF %.0f • Z %.0f",m.meters,ref.reference(),newest.signal())
-                      : String.format(java.util.Locale.US,"0 yüzey / normal • REF %.0f • Z %.0f",ref.reference(),newest.signal());
+                      ? String.format(java.util.Locale.US,"≈ %.2f m",m.meters)
+                      : String.format(java.util.Locale.US,"— m");
                     depthInfo.setText(measured);
                 }
                 cls.setTextColor(k.startsWith("NEGATİF")?Color.rgb(72,155,255):k.startsWith("POZİTİF")?Color.rgb(255,82,48):Color.rgb(65,225,112));

@@ -67,6 +67,15 @@ public final class GprFileIo {
         if(traces.isEmpty())throw new IOException("Radar izi bulunamadı");
         return new Record(traces,ns,dx);
     }
+    public static boolean looksLikeSegyHeader(byte[] h){
+        if(h==null||h.length<3600)return false;
+        // SEG-Y binary header: sample count at 3220, format at 3224.
+        for(boolean le:new boolean[]{false,true}){
+            int n=u16(h,3220,le),fmt=u16(h,3224,le);
+            if(n>=1&&n<=32768&&(fmt==1||fmt==2||fmt==3||fmt==5||fmt==8))return true;
+        }
+        return false;
+    }
     private static int u16(byte[] b,int index,boolean le){int x=b[index]&255,y=b[index+1]&255;return le?(x|(y<<8)):((x<<8)|y);}
     private static int i32(byte[] b,int idx,boolean le){
         int a=b[idx]&255,c=b[idx+1]&255,d=b[idx+2]&255,e=b[idx+3]&255;

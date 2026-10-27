@@ -84,7 +84,7 @@ public final class ScanActivity extends Activity implements BluetoothClient.List
     }
     @Override protected void onResume(){
         super.onResume();
-        if(data!=null)data.depthCalibrationFactor=Prefs.gradiometerDepthFactor(this);
+        if(data!=null)data.depthCalibrationFactor=1f;
         if(gridView!=null)gridView.invalidate();
     }
     @Override protected void onStop(){bt.release();super.onStop();}
@@ -92,7 +92,7 @@ public final class ScanActivity extends Activity implements BluetoothClient.List
 
     private void newData(){
         data=new ScanData(Prefs.rows(this),Prefs.cols(this));
-        data.depthCalibrationFactor=Prefs.gradiometerDepthFactor(this);
+        data.depthCalibrationFactor=1f;
         data.stepCm=Prefs.stepCm(this);
         data.startCorner=Prefs.startCorner(this);
         data.serpentine=Prefs.serpentine(this);
@@ -115,7 +115,7 @@ public final class ScanActivity extends Activity implements BluetoothClient.List
         depthBtn=Ui.button(this,"DERİNLİK",false);
         // Ustunde uzun bas: bilinen saha noktasi ile ters sinyal ekrani kalibrasyonu.
         depthBtn.setOnLongClickListener(v->{GradiometerCalibrationDialog.show(this,()->{
-            data.depthCalibrationFactor=Prefs.gradiometerDepthFactor(this);
+            data.depthCalibrationFactor=1f;
             applyOverlayMode();
         });return true;});
         depthBtn.setOnClickListener(v->{
